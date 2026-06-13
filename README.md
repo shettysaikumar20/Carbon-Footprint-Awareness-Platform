@@ -2,6 +2,10 @@
 
 EcoSphere is a premium, high-fidelity carbon footprint tracking, visualization, and reduction recommendation system designed to empower individuals to quantify and mitigate their carbon output. This project is structured as a client-side serverless application matching the **Google Antigravity UI theme**—utilizing cybernetic grids, quantum cyan/indigo status states, and monospace technical readouts.
 
+### 🔗 Project Resources
+* **Live Deployment:** [carbon-footprint-awareness-platform-seven.vercel.app](https://carbon-footprint-awareness-platform-seven.vercel.app/)
+* **GitHub Repository:** [github.com/shettysaikumar20/Carbon-Footprint-Awareness-Platform](https://github.com/shettysaikumar20/Carbon-Footprint-Awareness-Platform)
+
 ---
 
 ## 🌍 Abstract & Problem Statement
@@ -28,7 +32,7 @@ Emissions are calculated as **kilograms of carbon dioxide equivalent ($CO_2e$)**
 
 ### 1. Domestic Energy ($CO_2e$ per kWh)
 Domestic grid emissions dynamically adjust based on the operator's country configuration to represent realistic regional resource grids:
-* **India (in):** $0.70$ kg/kWh (Coal-heavy energy matrix)
+* **India (in):** $0.70$ kg/kWh (Coal-reliant energy matrix)
 * **United States (us):** $0.38$ kg/kWh (Mixed natural gas/coal grid)
 * **Germany (de):** $0.35$ kg/kWh (Wind/Coal transition grid)
 * **France (fr):** $0.05$ kg/kWh (Nuclear-reliant clean grid)
@@ -137,7 +141,3 @@ Verify the static generation build:
 npm run build
 ```
 
-### Deploy to Vercel
-1. Push your local directory to a GitHub repository.
-2. Go to the [Vercel Dashboard](https://vercel.com/new).
-3. Import the repository and click **Deploy**. Vercel detects the Next.js setup automatically and deploys the application.
