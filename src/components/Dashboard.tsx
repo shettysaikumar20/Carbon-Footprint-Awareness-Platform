@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { OnboardingData, LogEntry, Commitment, Badge, SavedRoute, INITIAL_COMMITMENTS, INITIAL_BADGES, exportToCSV } from '../lib/ecoStore';
+import { OnboardingData, LogEntry, Commitment, Badge, SavedRoute, INITIAL_COMMITMENTS, INITIAL_BADGES, exportToCSV, EMISSION_FACTORS } from '../lib/ecoStore';
 import LogEmissionModal from './LogEmissionModal';
 import OffsetSimulator from './OffsetSimulator';
 import EcoJourneyRoadmap from './EcoJourneyRoadmap';
@@ -9,15 +9,7 @@ import InsightsAdvisor from './InsightsAdvisor';
 import AIChatConsole from './AIChatConsole';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area, Legend } from 'recharts';
 import {
-  Compass,
-  Zap,
-  Award,
-  Sparkles,
-  Plus,
-  Trash2,
-  Calendar,
   Layers,
-  ChevronRight,
   TrendingDown,
   Info,
   LogOut,
@@ -25,11 +17,12 @@ import {
   Lightbulb,
   Download,
   Flame,
-  CheckCircle,
-  HelpCircle,
-  Car,
+  Plus,
+  Trash2,
   Cpu,
-  BrainCircuit
+  BrainCircuit,
+  Award,
+  Sparkles
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -38,63 +31,96 @@ interface DashboardProps {
   onResetOnboarding: () => void;
 }
 
+type TransportModeType = 'petrol' | 'diesel' | 'hybrid' | 'electric' | 'public' | 'flight_short' | 'flight_long';
+
+function generateRandomSuffix(): string {
+  return Math.random().toString(36).substring(2, 9);
+}
+
 export default function Dashboard({ initialBaseline, initialOnboardingData, onResetOnboarding }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'roadmap' | 'insights' | 'aichat'>('dashboard');
   const [isLogOpen, setIsLogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // States
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [commitments, setCommitments] = useState<Commitment[]>([]);
-  const [badges, setBadges] = useState<Badge[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecosphere_logs');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  const [commitments, setCommitments] = useState<Commitment[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecosphere_commitments');
+      return saved ? JSON.parse(saved) : INITIAL_COMMITMENTS;
+    }
+    return INITIAL_COMMITMENTS;
+  });
+
+  const [badges, setBadges] = useState<Badge[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecosphere_badges');
+      if (saved) return JSON.parse(saved);
+      const initial = [...INITIAL_BADGES];
+      initial[0].unlocked = true;
+      return initial;
+    }
+    return INITIAL_BADGES;
+  });
+
   const [isNetZero, setIsNetZero] = useState(false);
 
   // Advanced features state
-  const [carbonTarget, setCarbonTarget] = useState<number>(300); // Default 300 kg CO2e / month
-  const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
+  const [carbonTarget, setCarbonTarget] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecosphere_carbon_target');
+      return saved ? Number(saved) : 300;
+    }
+    return 300;
+  });
+
+  const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ecosphere_saved_routes');
+      if (saved) return JSON.parse(saved);
+      return [
+        { id: 'r1', label: 'Office Commute', distance: 12, mode: 'public' },
+        { id: 'r2', label: 'Grocery Run', distance: 4, mode: 'electric' },
+      ];
+    }
+    return [
+      { id: 'r1', label: 'Office Commute', distance: 12, mode: 'public' },
+      { id: 'r2', label: 'Grocery Run', distance: 4, mode: 'electric' },
+    ];
+  });
   
   // Saved route form
   const [newRouteName, setNewRouteName] = useState('');
   const [newRouteDistance, setNewRouteDistance] = useState(15);
-  const [newRouteMode, setNewRouteMode] = useState<keyof typeof import('../lib/ecoStore').EMISSION_FACTORS.transport>('public');
+  const [newRouteMode, setNewRouteMode] = useState<TransportModeType>('public');
 
   // Load state on mount
   useEffect(() => {
-    setMounted(true);
+    setTimeout(() => {
+      setMounted(true);
+    }, 0);
 
-    const savedLogs = localStorage.getItem('ecosphere_logs');
-    if (savedLogs) setLogs(JSON.parse(savedLogs));
-
-    const savedCommitments = localStorage.getItem('ecosphere_commitments');
-    if (savedCommitments) {
-      setCommitments(JSON.parse(savedCommitments));
-    } else {
-      setCommitments(INITIAL_COMMITMENTS);
-    }
-
-    const savedBadges = localStorage.getItem('ecosphere_badges');
-    if (savedBadges) {
-      setBadges(JSON.parse(savedBadges));
-    } else {
-      const initial = [...INITIAL_BADGES];
-      initial[0].unlocked = true;
-      setBadges(initial);
-      localStorage.setItem('ecosphere_badges', JSON.stringify(initial));
-    }
-
-    const savedTarget = localStorage.getItem('ecosphere_carbon_target');
-    if (savedTarget) setCarbonTarget(Number(savedTarget));
-
-    const savedRoutesData = localStorage.getItem('ecosphere_saved_routes');
-    if (savedRoutesData) {
-      setSavedRoutes(JSON.parse(savedRoutesData));
-    } else {
-      const defaultRoutes: SavedRoute[] = [
-        { id: 'r1', label: 'Office Commute', distance: 12, mode: 'public' },
-        { id: 'r2', label: 'Grocery Run', distance: 4, mode: 'electric' },
-      ];
-      setSavedRoutes(defaultRoutes);
-      localStorage.setItem('ecosphere_saved_routes', JSON.stringify(defaultRoutes));
+    // Initialize defaults in localStorage if they don't exist
+    if (typeof window !== 'undefined') {
+      if (!localStorage.getItem('ecosphere_badges')) {
+        const initial = [...INITIAL_BADGES];
+        initial[0].unlocked = true;
+        localStorage.setItem('ecosphere_badges', JSON.stringify(initial));
+      }
+      if (!localStorage.getItem('ecosphere_saved_routes')) {
+        const defaultRoutes: SavedRoute[] = [
+          { id: 'r1', label: 'Office Commute', distance: 12, mode: 'public' },
+          { id: 'r2', label: 'Grocery Run', distance: 4, mode: 'electric' },
+        ];
+        localStorage.setItem('ecosphere_saved_routes', JSON.stringify(defaultRoutes));
+      }
     }
   }, []);
 
@@ -114,9 +140,10 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
   // Add Log Entry
   const handleAddLog = (newEntry: Omit<LogEntry, 'id' | 'date'>) => {
+    const randomSuffix = generateRandomSuffix();
     const entry: LogEntry = {
       ...newEntry,
-      id: `l-${Date.now()}`,
+      id: `l-${randomSuffix}`,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     };
     const updated = [entry, ...logs];
@@ -126,7 +153,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
   // Saved commute trigger log
   const handleQuickLogCommute = (route: SavedRoute) => {
-    const factor = route.mode === 'public' ? 0.04 : route.mode === 'electric' ? 0.05 : route.mode === 'hybrid' ? 0.10 : 0.18;
+    const factor = EMISSION_FACTORS.transport[route.mode] || 0.18;
     const emission = Math.round(route.distance * factor);
     
     handleAddLog({
@@ -148,8 +175,9 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
     e.preventDefault();
     if (!newRouteName.trim()) return;
 
+    const randomSuffix = Math.random().toString(36).substring(2, 9);
     const route: SavedRoute = {
-      id: `r-${Date.now()}`,
+      id: `r-${randomSuffix}`,
       label: newRouteName,
       distance: newRouteDistance,
       mode: newRouteMode,
@@ -431,7 +459,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
               {activeTab === 'roadmap' && 'TRANSITION_TIMELINE_COORDS'}
               {activeTab === 'insights' && 'CARBON_REDUCTION_ADVISOR'}
             </h1>
-            <p className="text-[10px] text-slate-500 font-mono mt-1">// OPERATING ON ANTIGRAVITY SPECIFICATIONS</p>
+            <p className="text-[10px] text-slate-500 font-mono mt-1">{"// OPERATING ON ANTIGRAVITY SPECIFICATIONS"}</p>
           </div>
           <div className="flex gap-2">
             <button
@@ -515,21 +543,21 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                 <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="text-[9px] text-slate-500 uppercase tracking-widest">[INITIAL_BASELINE]</div>
                 <div className="text-xl font-bold text-white mt-2">{initialBaseline} KG <span className="text-[10px] text-slate-500">CO₂E/MO</span></div>
-                <p className="text-[9px] text-slate-500 mt-2">// Derived from setup questionnaire.</p>
+                <p className="text-[9px] text-slate-500 mt-2">{"// Derived from setup questionnaire."}</p>
               </div>
 
               <div className="glass-panel rounded-2xl p-5 border border-indigo-500/15 text-left relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="text-[9px] text-slate-500 uppercase tracking-widest">[COMMITMENT_REDUCTIONS]</div>
                 <div className="text-xl font-bold text-cyan-400 mt-2 glow-text-cyan font-mono">-{Math.round(activeReductionAnnual / 12)} KG <span className="text-[10px] text-slate-500">CO₂E/MO</span></div>
-                <p className="text-[9px] text-slate-500 mt-2">// From {commitments.filter(c => c.active).length} active reduction targets.</p>
+                <p className="text-[9px] text-slate-500 mt-2">{"// From "}{commitments.filter(c => c.active).length}{" active reduction targets."}</p>
               </div>
 
               <div className="glass-panel rounded-2xl p-5 border border-indigo-500/15 text-left relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="text-[9px] text-slate-500 uppercase tracking-widest">[EST_NET_MONTHLY]</div>
                 <div className="text-xl font-bold text-indigo-400 mt-2 glow-text-indigo">{estimatedCurrentEmissions} KG <span className="text-[10px] text-slate-500">CO₂E</span></div>
-                <p className="text-[9px] text-slate-500 mt-2">// Baseline reductions + ledger logs.</p>
+                <p className="text-[9px] text-slate-500 mt-2">{"// Baseline reductions + ledger logs."}</p>
               </div>
             </div>
 
@@ -566,7 +594,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                 <div className="md:col-span-7 space-y-3">
                   <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Click to trigger instant ledger entry:</div>
                   {savedRoutes.length === 0 ? (
-                    <div className="text-xs text-slate-500 italic py-4 font-mono">// No routes configured. Add one on the right.</div>
+                    <div className="text-xs text-slate-500 italic py-4 font-mono">{"// No routes configured. Add one on the right."}</div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Pre-saved commute routes quick logger list">
                       {savedRoutes.map((route) => (
@@ -630,7 +658,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                         <select
                           id="new-route-mode-select"
                           value={newRouteMode}
-                          onChange={(e) => setNewRouteMode(e.target.value as any)}
+                          onChange={(e) => setNewRouteMode(e.target.value as TransportModeType)}
                           className="w-full px-2 py-1 bg-slate-950 border border-white/5 rounded-lg text-slate-400 focus:outline-none focus:border-cyan-500 text-xs"
                         >
                           <option value="public">Public</option>
@@ -662,7 +690,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                   {logs.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-xs text-slate-500 flex-col gap-2 font-mono">
                       <Info className="w-8 h-8 text-slate-650" />
-                      <span>// NO_DATA_STREAMS: Log daily parameters to plot categories.</span>
+                      <span>{"// NO_DATA_STREAMS: Log daily parameters to plot categories."}</span>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
@@ -722,7 +750,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                 <div className="mt-6 border-t border-indigo-500/15 pt-4 font-mono text-[10px]">
                   <div className="flex justify-between items-center text-slate-500 mb-2">
                     <span>[ACTIVE_COMMITMENTS]</span>
-                    <span>{commitments.filter((c) => c.active).length} // {commitments.length}</span>
+                    <span>{commitments.filter((c) => c.active).length} {"//"} {commitments.length}</span>
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
                     {commitments.filter(c => c.active).slice(0, 3).map((c) => (
@@ -736,7 +764,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                       </span>
                     )}
                     {commitments.filter(c => c.active).length === 0 && (
-                      <span className="text-[8px] text-slate-600 italic">// No active commitments.</span>
+                      <span className="text-[8px] text-slate-600 italic">{"// No active commitments."}</span>
                     )}
                   </div>
                 </div>
@@ -762,7 +790,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
               {logs.length === 0 ? (
                 <div className="py-8 text-center text-xs text-slate-600 font-mono">
-                  // LEDGER_EMPTY: Enter manual emissions logs to begin tracking.
+                  {"// LEDGER_EMPTY: Enter manual emissions logs to begin tracking."}
                 </div>
               ) : (
                 <div className="overflow-x-auto">

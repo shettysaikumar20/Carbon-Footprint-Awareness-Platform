@@ -2,11 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { OnboardingData, calculateBaseline } from '../lib/ecoStore';
-import { Leaf, Zap, Car, Utensils, ArrowRight, ArrowLeft, CheckCircle2, HelpCircle } from 'lucide-react';
+import { Leaf, Car, Utensils, ArrowRight, ArrowLeft, CheckCircle2, HelpCircle } from 'lucide-react';
 
 interface OnboardingWizardProps {
   onComplete: (data: OnboardingData, baseline: number) => void;
 }
+
+const bootLogs = [
+  '// INITIALIZING QUANTUM ENVIRONMENTAL LEDGER...',
+  '// BOOTSTRAPPING CO2e CONVERSION COEFFICIENTS...',
+  '// PARSING EPA & DEFRA EMISSIONS PROTOCOLS...',
+  '// CALIBRATING ANTIGRAVITY SYS CONTROLS...',
+  '// ECOSPHERE CORE STABILITY LCK: ONLINE.'
+];
 
 export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [welcomeScreen, setWelcomeScreen] = useState(true);
@@ -23,14 +31,6 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     diet: 'flexitarian',
     flights: 2,
   });
-
-  const bootLogs = [
-    '// INITIALIZING QUANTUM ENVIRONMENTAL LEDGER...',
-    '// BOOTSTRAPPING CO2e CONVERSION COEFFICIENTS...',
-    '// PARSING EPA & DEFRA EMISSIONS PROTOCOLS...',
-    '// CALIBRATING ANTIGRAVITY SYS CONTROLS...',
-    '// ECOSPHERE CORE STABILITY LCK: ONLINE.'
-  ];
 
   useEffect(() => {
     if (welcomeScreen && bootStep < bootLogs.length) {
@@ -71,7 +71,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               </div>
             ))}
             {bootStep < bootLogs.length && (
-              <div className="text-slate-500 animate-pulse">// LOADING INPUT MATRICES... <span className="inline-block w-1.5 h-3 bg-slate-400" /></div>
+              <div className="text-slate-500 animate-pulse">{"// LOADING INPUT MATRICES..."} <span className="inline-block w-1.5 h-3 bg-slate-400" /></div>
             )}
           </div>
 
@@ -166,7 +166,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   <select
                     id="country-input"
                     value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value as 'in' | 'us' | 'de' | 'fr' | 'no' })}
                     className="w-full px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 focus:outline-none focus:border-cyan-500"
                   >
                     <option value="in">India (Coal heavy, 0.70 kg/kWh)</option>

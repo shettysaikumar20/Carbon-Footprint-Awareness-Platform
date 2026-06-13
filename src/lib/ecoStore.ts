@@ -225,9 +225,6 @@ export function compileAIResponse(query: string, data: OnboardingData, logs: Log
   
   // Calculate stats
   const totalLogsEmission = logs.reduce((acc, l) => acc + l.emission, 0);
-  const transportLogs = logs.filter(l => l.category === 'transport');
-  const energyLogs = logs.filter(l => l.category === 'energy');
-  const foodLogs = logs.filter(l => l.category === 'food');
   
   const countryName = data.country === 'in' ? 'India' :
                       data.country === 'us' ? 'United States' :

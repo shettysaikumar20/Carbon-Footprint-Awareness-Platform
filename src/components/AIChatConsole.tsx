@@ -17,21 +17,19 @@ interface ChatMessage {
 
 export default function AIChatConsole({ onboardingData, logs }: AIChatConsoleProps) {
   const [input, setInput] = useState('');
-  const [history, setHistory] = useState<ChatMessage[]>([]);
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Initial system greeting message
+  const [history, setHistory] = useState<ChatMessage[]>(() => {
     const greetMsg = compileAIResponse('', onboardingData, logs);
-    setHistory([
+    return [
       {
         sender: 'system',
         text: greetMsg,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       },
-    ]);
-  }, [onboardingData, logs]);
+    ];
+  });
 
   // Scroll to bottom on updates
   useEffect(() => {
@@ -57,7 +55,6 @@ export default function AIChatConsole({ onboardingData, logs }: AIChatConsolePro
     setInput('');
     setTyping(true);
 
-    // Dynamic typewriter response latency delay
     setTimeout(() => {
       const aiReply = compileAIResponse(text, onboardingData, logs);
       const systemMsg: ChatMessage = {
@@ -94,9 +91,10 @@ export default function AIChatConsole({ onboardingData, logs }: AIChatConsolePro
           <span className="font-bold text-white uppercase tracking-wider">[SYS_LLM_CO2_CONSULTANT]</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[10px] text-slate-500 font-bold uppercase">// SECURITY: ENCRYPTED</span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase">{"// SECURITY: ENCRYPTED"}</span>
           <button
             onClick={handleClear}
+            aria-label="Clear chat ledger and console history"
             className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-900 transition-colors"
             title="Clear Chat Logs"
           >
@@ -111,6 +109,7 @@ export default function AIChatConsole({ onboardingData, logs }: AIChatConsolePro
           <button
             key={idx}
             onClick={() => sendMessage(p.query)}
+            aria-label={`Send preset command ${p.label} to AI`}
             className="px-3 py-1.5 rounded-lg border border-indigo-500/10 bg-slate-950/60 hover:bg-cyan-500/5 hover:border-cyan-500/35 transition-all text-slate-400 text-[10px] text-left uppercase"
           >
             {p.label}
@@ -149,7 +148,9 @@ export default function AIChatConsole({ onboardingData, logs }: AIChatConsolePro
 
       {/* Form Input bar */}
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-indigo-500/15 pt-4">
+        <label htmlFor="ai-chat-prompt-input" className="sr-only">Ask EcoSphere AI</label>
         <input
+          id="ai-chat-prompt-input"
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -158,7 +159,8 @@ export default function AIChatConsole({ onboardingData, logs }: AIChatConsolePro
         />
         <button
           type="submit"
-          className="p-2.5 rounded-xl bg-cyan-505 bg-cyan-500 text-slate-950 font-bold transition-all hover:bg-cyan-400 shadow-md shadow-cyan-500/10"
+          aria-label="Send query message to AI assistant"
+          className="p-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold transition-all hover:bg-cyan-400 shadow-md shadow-cyan-500/10"
         >
           <Send className="w-4 h-4" />
         </button>

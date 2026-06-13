@@ -104,7 +104,16 @@ export default function EcoJourneyRoadmap({
               <div
                 key={phase.id}
                 onClick={() => setSelectedPhase(phase.id)}
-                className={`flex items-start gap-4 cursor-pointer group relative z-10 transition-all ${
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedPhase(phase.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`View phase ${phase.id} details: ${phase.title}`}
+                className={`flex items-start gap-4 cursor-pointer group relative z-10 transition-all focus:outline-none focus:ring-1 focus:ring-cyan-500 rounded-lg p-1 ${
                   active ? 'scale-[1.01]' : 'opacity-60 hover:opacity-100'
                 }`}
               >
@@ -155,7 +164,7 @@ export default function EcoJourneyRoadmap({
               <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest bg-cyan-500/10 px-2 py-0.5 rounded-full">
                 [SYS_PHASE_STATUS]
               </span>
-              <span className="text-[10px] text-slate-500 font-bold">0{currentPhaseDetails.id} // 04</span>
+              <span className="text-[10px] text-slate-500 font-bold">0{currentPhaseDetails.id} {"// 04"}</span>
             </div>
 
             <h3 className="font-bold uppercase text-white">{currentPhaseDetails.title}</h3>
