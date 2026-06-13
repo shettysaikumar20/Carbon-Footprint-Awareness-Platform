@@ -14,6 +14,13 @@ export default function InsightsAdvisor({ commitments, onToggleCommitment }: Ins
   const totalCarbonSaving = activeCommitments.reduce((acc, c) => acc + c.carbonSaving, 0);
   const totalCostSaving = activeCommitments.reduce((acc, c) => acc + c.costSaving, 0);
 
+  const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggleCommitment(id);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Dynamic Summary Cards */}
@@ -52,9 +59,9 @@ export default function InsightsAdvisor({ commitments, onToggleCommitment }: Ins
       </div>
 
       {/* Guide list */}
-      <div className="glass-panel rounded-3xl p-6 border border-indigo-500/20 relative overflow-hidden">
+      <section className="glass-panel rounded-3xl p-6 border border-indigo-500/20 relative overflow-hidden" aria-labelledby="reduction-schemas-title">
         <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
-        <h2 className="text-sm font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-4">
+        <h2 id="reduction-schemas-title" className="text-sm font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-4">
           <Lightbulb className="w-4 h-4 text-cyan-400" /> [ACTIONABLE_REDUCTION_SCHEMAS]
         </h2>
         <p className="text-slate-400 text-xs mb-6">Select climate reduction schemas to load them into your active environmental roadmap commitments.</p>
@@ -64,7 +71,12 @@ export default function InsightsAdvisor({ commitments, onToggleCommitment }: Ins
             <div
               key={action.id}
               onClick={() => onToggleCommitment(action.id)}
-              className={`p-4 rounded-2xl border cursor-pointer text-left transition-all ${
+              onKeyDown={(e) => handleKeyDown(e, action.id)}
+              role="button"
+              tabIndex={0}
+              aria-pressed={action.active}
+              aria-label={`Toggle commitment ${action.title}. Saves ${action.carbonSaving} kg CO2 annually.`}
+              className={`p-4 rounded-2xl border cursor-pointer text-left transition-all focus:outline-none focus:ring-1 focus:ring-cyan-500 ${
                 action.active
                   ? 'border-cyan-500 bg-cyan-500/10 shadow-[0_0_12px_rgba(6,182,212,0.05)]'
                   : 'border-white/5 bg-slate-900/40 hover:border-white/10'
@@ -103,7 +115,7 @@ export default function InsightsAdvisor({ commitments, onToggleCommitment }: Ins
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

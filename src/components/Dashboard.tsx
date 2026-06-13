@@ -136,6 +136,13 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
     });
   };
 
+  const handleRouteKeyDown = (e: React.KeyboardEvent, route: SavedRoute) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleQuickLogCommute(route);
+    }
+  };
+
   // Save a new custom route
   const handleCreateRoute = (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,7 +201,6 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
       { id: 'm3', date: 'Jun 12, 2026', category: 'food', details: '3x meat-heavy dinners with friends', emission: 13.5 },
       { id: 'm4', date: 'Jun 12, 2026', category: 'waste', details: '3 bags of standard landfill garbage', emission: 7.5 }
     ];
-    // Commit 3 active reductions
     const mockCommitments = commitments.map((c, i) => i < 3 ? { ...c, active: true } : c);
     setCommitments(mockCommitments);
     localStorage.setItem('ecosphere_commitments', JSON.stringify(mockCommitments));
@@ -252,20 +258,17 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
   const monthlyLogEmissions = logs.reduce((acc, l) => acc + l.emission, 0);
 
-  // Baseline Monthly Footprint minus active commitments scaled to month
   const estimatedCurrentEmissions = Math.max(
     0,
     Math.round(initialBaseline - activeReductionAnnual / 12) + monthlyLogEmissions
   );
 
-  // Consecutive Streak Count (Rough calculation based on unique days logged)
   const calculateStreak = (): number => {
     if (logs.length === 0) return 0;
     const dates = logs.map(l => l.date).filter((value, index, self) => self.indexOf(value) === index);
     return dates.length;
   };
 
-  // Letter Grade Calculation based on Custom Target
   const calculateGrade = () => {
     if (estimatedCurrentEmissions === 0) return { letter: 'A+', color: 'text-cyan-400', desc: 'Absolute Zero Neutrality' };
     const ratio = estimatedCurrentEmissions / carbonTarget;
@@ -293,7 +296,6 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
     { name: 'Waste', emission: categoriesMap.waste, color: '#f43f5e' },
   ];
 
-  // AI 5-Year Projections data model
   const projectionData = [
     { year: 'Year 0', currentPath: Math.round(initialBaseline * 12), targetPath: Math.round(initialBaseline * 12) },
     { year: 'Year 1', currentPath: Math.round(initialBaseline * 12 * 2), targetPath: Math.round(estimatedCurrentEmissions * 12 * 2) },
@@ -313,7 +315,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
   return (
     <div className="flex flex-col lg:flex-row min-h-screen text-slate-350">
       {/* Sidebar navigation */}
-      <aside className="w-full lg:w-64 glass-panel border-r border-indigo-500/20 flex flex-col justify-between p-6">
+      <aside className="w-full lg:w-64 glass-panel border-r border-indigo-500/20 flex flex-col justify-between p-6" aria-label="Console sidebar">
         <div>
           {/* Logo */}
           <div className="flex items-center gap-2 mb-8">
@@ -342,9 +344,10 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
           </div>
 
           {/* Menu Items */}
-          <nav className="space-y-1.5 font-mono text-xs">
+          <nav className="space-y-1.5 font-mono text-xs" aria-label="Main navigation menu">
             <button
               onClick={() => setActiveTab('dashboard')}
+              aria-label="View carbon dashboard overview"
               className={`w-full py-3 px-4 rounded-xl text-left font-bold flex items-center gap-3 transition-all ${
                 activeTab === 'dashboard'
                   ? 'bg-cyan-500/10 border border-cyan-500/20 text-white'
@@ -356,6 +359,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
             <button
               onClick={() => setActiveTab('aichat')}
+              aria-label="Open Climate AI Assistant terminal dialogue"
               className={`w-full py-3 px-4 rounded-xl text-left font-bold flex items-center gap-3 transition-all ${
                 activeTab === 'aichat'
                   ? 'bg-cyan-500/10 border border-cyan-500/20 text-white font-bold'
@@ -367,6 +371,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
             <button
               onClick={() => setActiveTab('simulator')}
+              aria-label="Enter carbon offset simulation lab"
               className={`w-full py-3 px-4 rounded-xl text-left font-bold flex items-center gap-3 transition-all ${
                 activeTab === 'simulator'
                   ? 'bg-cyan-500/10 border border-cyan-500/20 text-white'
@@ -378,6 +383,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
             <button
               onClick={() => setActiveTab('roadmap')}
+              aria-label="View eco-journey milestones roadmap timeline"
               className={`w-full py-3 px-4 rounded-xl text-left font-bold flex items-center gap-3 transition-all ${
                 activeTab === 'roadmap'
                   ? 'bg-cyan-500/10 border border-cyan-500/20 text-white'
@@ -389,6 +395,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
             <button
               onClick={() => setActiveTab('insights')}
+              aria-label="View action checklists and commitments guide"
               className={`w-full py-3 px-4 rounded-xl text-left font-bold flex items-center gap-3 transition-all ${
                 activeTab === 'insights'
                   ? 'bg-cyan-500/10 border border-cyan-500/20 text-white'
@@ -404,6 +411,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
         <div className="font-mono text-xs">
           <button
             onClick={onResetOnboarding}
+            aria-label="Reset your profile baseline data and credentials"
             className="w-full py-3 px-4 rounded-xl text-left text-slate-600 hover:text-red-400 flex items-center gap-3 transition-all border border-transparent hover:border-red-500/20"
           >
             <LogOut className="w-3.5 h-3.5" /> [RESET_SYS]
@@ -414,7 +422,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
       {/* Main content pane */}
       <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto max-h-screen">
         {/* Top Header bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-indigo-500/15 pb-4">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-indigo-500/15 pb-4">
           <div>
             <h1 className="text-xl font-bold font-mono text-white tracking-wider uppercase">
               {activeTab === 'dashboard' && 'SYSTEM_DASHBOARD_READOUT'}
@@ -428,18 +436,20 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
           <div className="flex gap-2">
             <button
               onClick={handleTriggerDemoTour}
+              aria-label="Load mock activity transactions for demonstration"
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-indigo-500/15 bg-slate-950 text-indigo-400 font-bold font-mono text-xs hover:border-indigo-500/40 hover:bg-slate-900 transition-all"
             >
               <Cpu className="w-4 h-4" /> [SYSTEM_DEMO_TOUR]
             </button>
             <button
               onClick={() => setIsLogOpen(true)}
+              aria-label="Log new manual carbon emission activity"
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold font-mono text-xs transition-all hover:bg-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
             >
               <Plus className="w-4 h-4" /> [LOG_NEW_EMISSION]
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Dynamic Tab Render */}
         {activeTab === 'dashboard' && (
@@ -457,10 +467,11 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-xs font-mono">
-                    <span className="text-slate-500">MONTHLY_CEILING_LIMIT</span>
+                    <label htmlFor="budget-ceiling-slider" className="text-slate-500">MONTHLY_CEILING_LIMIT</label>
                     <span className="text-cyan-400 font-bold">{carbonTarget} KG CO₂e</span>
                   </div>
                   <input
+                    id="budget-ceiling-slider"
                     type="range"
                     min="100"
                     max="600"
@@ -545,8 +556,8 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
             </div>
 
             {/* Saved Commute Quick Logs */}
-            <div className="glass-panel rounded-3xl p-6 border border-indigo-500/20">
-              <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider mb-4">
+            <section className="glass-panel rounded-3xl p-6 border border-indigo-500/20" aria-labelledby="quick-logger-heading">
+              <h3 id="quick-logger-heading" className="text-xs font-mono font-bold text-white uppercase tracking-wider mb-4">
                 [SAVED_COMMUTES_QUICK_LOGGER]
               </h3>
               
@@ -557,12 +568,16 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                   {savedRoutes.length === 0 ? (
                     <div className="text-xs text-slate-500 italic py-4 font-mono">// No routes configured. Add one on the right.</div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Pre-saved commute routes quick logger list">
                       {savedRoutes.map((route) => (
                         <div
                           key={route.id}
                           onClick={() => handleQuickLogCommute(route)}
-                          className="p-3 rounded-xl border border-indigo-500/10 bg-slate-950/60 hover:bg-cyan-500/5 hover:border-cyan-500/35 transition-all cursor-pointer flex justify-between items-center group"
+                          onKeyDown={(e) => handleRouteKeyDown(e, route)}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Log commute details: ${route.label}, distance ${route.distance} km via ${route.mode}`}
+                          className="p-3 rounded-xl border border-indigo-500/10 bg-slate-950/60 hover:bg-cyan-500/5 hover:border-cyan-500/35 transition-all cursor-pointer flex justify-between items-center group focus:outline-none focus:ring-1 focus:ring-cyan-500"
                         >
                           <div className="font-mono text-xs">
                             <div className="font-bold text-white group-hover:text-cyan-400 transition-colors uppercase">{route.label}</div>
@@ -573,6 +588,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                               e.stopPropagation();
                               handleDeleteRoute(route.id);
                             }}
+                            aria-label={`Delete pre-saved route ${route.label}`}
                             className="p-1 rounded text-slate-700 hover:text-red-400 hover:bg-slate-800 transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -588,7 +604,9 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                   <div className="text-[9px] font-mono text-indigo-400 uppercase tracking-widest mb-3">[CONFIGURE_NEW_ROUTE]</div>
                   <form onSubmit={handleCreateRoute} className="space-y-3 font-mono text-xs">
                     <div>
+                      <label htmlFor="new-route-name-input" className="sr-only">Route Name Label</label>
                       <input
+                        id="new-route-name-input"
                         type="text"
                         placeholder="Route label (e.g. Office)"
                         value={newRouteName}
@@ -598,8 +616,9 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                     </div>
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <label className="text-[9px] text-slate-500">KM</label>
+                        <label htmlFor="new-route-distance-input" className="text-[9px] text-slate-500 block">Distance (KM)</label>
                         <input
+                          id="new-route-distance-input"
                           type="number"
                           value={newRouteDistance}
                           onChange={(e) => setNewRouteDistance(Number(e.target.value))}
@@ -607,8 +626,9 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="text-[9px] text-slate-500">MODE</label>
+                        <label htmlFor="new-route-mode-select" className="text-[9px] text-slate-500 block">Transit Mode</label>
                         <select
+                          id="new-route-mode-select"
                           value={newRouteMode}
                           onChange={(e) => setNewRouteMode(e.target.value as any)}
                           className="w-full px-2 py-1 bg-slate-950 border border-white/5 rounded-lg text-slate-400 focus:outline-none focus:border-cyan-500 text-xs"
@@ -629,7 +649,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                   </form>
                 </div>
               </div>
-            </div>
+            </section>
 
             {/* Visual Charts panel */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -668,7 +688,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
               <div className="lg:col-span-5 glass-panel rounded-3xl p-6 border border-indigo-500/20 flex flex-col justify-between">
                 <div>
                   <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider mb-4">[MILITARY_SYSTEM_ACHIEVEMENTS]</h3>
-                  <div className="grid grid-cols-5 gap-2.5">
+                  <div className="grid grid-cols-5 gap-2.5" role="group" aria-label="Unlocked system badges">
                     {badges.map((badge) => {
                       const unlocked = badge.unlocked;
                       return (
@@ -682,7 +702,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                             unlocked
                               ? 'bg-indigo-500/10 border-indigo-500/40 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)] glow-border-cyan'
                               : 'bg-slate-900 border-white/5 text-slate-700'
-                          }`}>
+                          }`} aria-label={`${badge.title} badge: ${unlocked ? 'unlocked' : 'locked'}`}>
                             <Award className="w-5 h-5" />
                           </div>
                           {/* Tooltip */}
@@ -732,6 +752,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                   <button
                     onClick={handleExportCSV}
                     disabled={logs.length === 0}
+                    aria-label="Export transaction logs to CSV file"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-500/15 bg-slate-950 text-slate-400 font-mono text-[9px] hover:text-cyan-400 hover:border-cyan-500/30 transition-all disabled:opacity-40 disabled:pointer-events-none"
                   >
                     <Download className="w-3.5 h-3.5" /> EXPORT_CSV
@@ -774,6 +795,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                           <td className="py-3 text-right">
                             <button
                               onClick={() => handleDeleteLog(log.id)}
+                              aria-label={`Delete ledger entry logged on ${log.date}`}
                               className="p-1 rounded text-slate-700 hover:text-red-400 hover:bg-slate-900 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />

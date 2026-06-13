@@ -54,6 +54,7 @@ export default function OffsetSimulator({ monthlyEmissions, onNetZeroUnlocked }:
         </div>
         <button
           onClick={handleReset}
+          aria-label="Reset all offset sliders to zero"
           className="text-xs text-slate-500 hover:text-cyan-450 transition-colors uppercase font-bold tracking-wider font-mono"
         >
           [RESET_SLIDERS]
@@ -92,7 +93,7 @@ export default function OffsetSimulator({ monthlyEmissions, onNetZeroUnlocked }:
             {percentOffset}% NEUTRALIZED
           </span>
         </div>
-        <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-indigo-500/20 p-0.5">
+        <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-indigo-500/20 p-0.5" aria-label={`Offset progress is ${percentOffset} percent`}>
           <div
             className={`h-full rounded-full transition-all duration-350 ${
               percentOffset >= 100
@@ -109,12 +110,13 @@ export default function OffsetSimulator({ monthlyEmissions, onNetZeroUnlocked }:
         {/* Sliders: Tree Planting */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="font-semibold text-slate-300 flex items-center gap-1.5 font-mono text-xs uppercase">
+            <label htmlFor="offset-trees-input" className="font-semibold text-slate-300 flex items-center gap-1.5 font-mono text-xs uppercase">
               🌲 Reforestation Grid
-            </span>
+            </label>
             <span className="font-bold font-mono text-xs text-indigo-400">{trees} Trees</span>
           </div>
           <input
+            id="offset-trees-input"
             type="range"
             min="0"
             max="150"
@@ -132,12 +134,13 @@ export default function OffsetSimulator({ monthlyEmissions, onNetZeroUnlocked }:
         {/* Sliders: Solar Panels */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="font-semibold text-slate-300 flex items-center gap-1.5 font-mono text-xs uppercase">
+            <label htmlFor="offset-solar-input" className="font-semibold text-slate-300 flex items-center gap-1.5 font-mono text-xs uppercase">
               ☀️ Community Solar
-            </span>
+            </label>
             <span className="font-bold font-mono text-xs text-cyan-400">{solarPanels} Panels</span>
           </div>
           <input
+            id="offset-solar-input"
             type="range"
             min="0"
             max="10"
@@ -155,12 +158,13 @@ export default function OffsetSimulator({ monthlyEmissions, onNetZeroUnlocked }:
         {/* Sliders: Wind energy */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="font-semibold text-slate-300 flex items-center gap-1.5 font-mono text-xs uppercase">
+            <label htmlFor="offset-wind-input" className="font-semibold text-slate-300 flex items-center gap-1.5 font-mono text-xs uppercase">
               💨 Wind Turbine Project
-            </span>
+            </label>
             <span className="font-bold font-mono text-xs text-purple-400">{windShares} Turbine Shares</span>
           </div>
           <input
+            id="offset-wind-input"
             type="range"
             min="0"
             max="5"
@@ -178,7 +182,7 @@ export default function OffsetSimulator({ monthlyEmissions, onNetZeroUnlocked }:
 
       {/* Net Zero Success Alert */}
       {percentOffset >= 100 && (
-        <div className="mt-8 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-start gap-3 text-left transition-all animate-float">
+        <div role="alert" className="mt-8 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-start gap-3 text-left transition-all animate-float">
           <ShieldAlert className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
           <div className="font-mono text-xs">
             <h4 className="font-extrabold text-cyan-400">[NET_ZERO_STABILITY_LOCKED]</h4>

@@ -32,7 +32,6 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     '// ECOSPHERE CORE STABILITY LCK: ONLINE.'
   ];
 
-  // Typewriter boot loader effect
   useEffect(() => {
     if (welcomeScreen && bootStep < bootLogs.length) {
       const timer = setTimeout(() => {
@@ -61,7 +60,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
           {/* Console Header */}
           <div className="flex justify-between items-center border-b border-indigo-500/15 pb-4 mb-6">
             <span className="font-bold text-white tracking-widest">[ECOSPHERE_BOOT_SEQUENCE]</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-ping" />
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-ping" aria-label="System status online ping indicator" />
           </div>
 
           {/* Boot logs print */}
@@ -81,6 +80,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
             <div className="border-t border-white/5 pt-6 mt-6 transition-all animate-fade-in text-center">
               <button
                 onClick={() => setWelcomeScreen(false)}
+                aria-label="Proceed to operator calibration onboarding"
                 className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-slate-950 font-bold transition-all hover:opacity-90 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
               >
                 PROCEED_TO_OPERATOR_CALIBRATION
@@ -100,12 +100,13 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
 
         {/* Progress Bar */}
-        <div className="flex justify-between items-center mb-8 relative">
+        <nav className="flex justify-between items-center mb-8 relative" aria-label="Onboarding step tracker">
           {[1, 2, 3, 4].map((num) => (
             <div key={num} className="flex items-center z-10">
               <button
                 disabled={num > step}
                 onClick={() => setStep(num)}
+                aria-label={`Go to step ${num}`}
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-mono font-bold transition-all ${
                   step >= num
                     ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.6)]'
@@ -123,10 +124,10 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               )}
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Header */}
-        <div className="text-center mb-8">
+        <header className="text-center mb-8">
           <div className="inline-flex items-center gap-2 text-cyan-400 font-mono text-xs uppercase tracking-widest mb-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" /> ANTIGRAVITY // ECO_BASELINE
           </div>
@@ -142,17 +143,18 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
             {step === 3 && 'Calculate the ecological coefficients of your food lifestyle.'}
             {step === 4 && 'Confirm your profile baseline parameters and launch EcoSphere.'}
           </p>
-        </div>
+        </header>
 
         {/* Content Steps */}
-        <div className="my-8 min-h-[260px]">
+        <main className="my-8 min-h-[260px]">
           {/* STEP 1: OPERATOR PROFILE SETUP */}
           {step === 1 && (
             <div className="space-y-6 font-mono text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-400 uppercase tracking-wider mb-2">Operator Name</label>
+                  <label htmlFor="username-input" className="block text-slate-400 uppercase tracking-wider mb-2">Operator Name</label>
                   <input
+                    id="username-input"
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -160,8 +162,9 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 uppercase tracking-wider mb-2">Location Country</label>
+                  <label htmlFor="country-input" className="block text-slate-400 uppercase tracking-wider mb-2">Location Country</label>
                   <select
+                    id="country-input"
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value as any })}
                     className="w-full px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 focus:outline-none focus:border-cyan-500"
@@ -176,37 +179,41 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               </div>
 
               <div>
-                <label className="block text-slate-400 uppercase tracking-wider mb-2">Avatar Console Tint</label>
-                <div className="flex gap-4">
-                  {[
-                    { hex: '#06b6d4', name: 'Cyan' },
-                    { hex: '#6366f1', name: 'Indigo' },
-                    { hex: '#a855f7', name: 'Purple' },
-                    { hex: '#f43f5e', name: 'Rose' },
-                  ].map((color) => (
-                    <button
-                      key={color.hex}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, avatarColor: color.hex })}
-                      className={`px-4 py-2 rounded-lg border transition-all ${
-                        formData.avatarColor === color.hex
-                          ? 'border-cyan-500 text-white'
-                          : 'border-white/5 bg-slate-900/40 text-slate-550'
-                      }`}
-                      style={{ color: formData.avatarColor === color.hex ? color.hex : '' }}
-                    >
-                      {color.name}
-                    </button>
-                  ))}
-                </div>
+                <fieldset>
+                  <legend className="block text-slate-400 uppercase tracking-wider mb-2">Avatar Console Tint</legend>
+                  <div className="flex gap-4">
+                    {[
+                      { hex: '#06b6d4', name: 'Cyan' },
+                      { hex: '#6366f1', name: 'Indigo' },
+                      { hex: '#a855f7', name: 'Purple' },
+                      { hex: '#f43f5e', name: 'Rose' },
+                    ].map((color) => (
+                      <button
+                        key={color.hex}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, avatarColor: color.hex })}
+                        aria-label={`Select ${color.name} console color theme`}
+                        className={`px-4 py-2 rounded-lg border transition-all ${
+                          formData.avatarColor === color.hex
+                            ? 'border-cyan-500 text-white'
+                            : 'border-white/5 bg-slate-900/40 text-slate-550'
+                        }`}
+                        style={{ color: formData.avatarColor === color.hex ? color.hex : '' }}
+                      >
+                        {color.name}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
               </div>
 
               <div>
-                <label className="flex justify-between text-slate-350 mb-2">
+                <label htmlFor="house-size-input" className="flex justify-between text-slate-350 mb-2">
                   <span>Home Size (sq. ft.)</span>
-                  <span className="text-cyan-400 font-bold">{formData.houseSize} SQFT</span>
+                  <span className="text-cyan-400 font-bold font-mono">{formData.houseSize} SQFT</span>
                 </label>
                 <input
+                  id="house-size-input"
                   type="range"
                   min="500"
                   max="5000"
@@ -223,33 +230,37 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="text-slate-350 font-mono text-xs mb-3 block">Primary Commute Vehicle Type</label>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  {(['petrol', 'diesel', 'hybrid', 'electric', 'none'] as const).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, vehicleType: type })}
-                      className={`p-3 rounded-xl text-center border transition-all ${
-                        formData.vehicleType === type
-                          ? 'border-cyan-500 bg-cyan-500/10 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                          : 'border-white/5 bg-slate-900/40 text-slate-405 hover:border-white/10'
-                      }`}
-                    >
-                      <Car className={`w-5 h-5 mx-auto mb-1 ${formData.vehicleType === type ? 'text-cyan-400' : 'text-slate-500'}`} />
-                      <div className="font-bold font-mono text-[10px] uppercase text-white">{type === 'none' ? 'Bicycle/Walk' : type}</div>
-                    </button>
-                  ))}
-                </div>
+                <fieldset>
+                  <legend className="text-slate-355 font-mono text-xs mb-3 block">Primary Commute Vehicle Type</legend>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {(['petrol', 'diesel', 'hybrid', 'electric', 'none'] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, vehicleType: type })}
+                        aria-label={`Select vehicle type ${type}`}
+                        className={`p-3 rounded-xl text-center border transition-all ${
+                          formData.vehicleType === type
+                            ? 'border-cyan-500 bg-cyan-500/10 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                            : 'border-white/5 bg-slate-900/40 text-slate-405 hover:border-white/10'
+                        }`}
+                      >
+                        <Car className={`w-5 h-5 mx-auto mb-1 ${formData.vehicleType === type ? 'text-cyan-400' : 'text-slate-500'}`} />
+                        <div className="font-bold font-mono text-[10px] uppercase text-white">{type === 'none' ? 'Bicycle/Walk' : type}</div>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
               </div>
 
               {formData.vehicleType !== 'none' && (
                 <div>
-                  <label className="flex justify-between text-slate-300 font-mono text-xs mb-2">
+                  <label htmlFor="weekly-commute-distance" className="flex justify-between text-slate-305 font-mono text-xs mb-2">
                     <span>Weekly Commute Distance (km)</span>
                     <span className="text-cyan-400 font-bold font-mono">{formData.weeklyDistance} KM</span>
                   </label>
                   <input
+                    id="weekly-commute-distance"
                     type="range"
                     min="0"
                     max="1000"
@@ -267,11 +278,12 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               )}
 
               <div>
-                <label className="flex justify-between text-slate-300 font-mono text-xs mb-2">
+                <label htmlFor="yearly-flights-input" className="flex justify-between text-slate-300 font-mono text-xs mb-2">
                   <span>Flights Per Year (Round Trips)</span>
                   <span className="text-indigo-400 font-bold font-mono">{formData.flights} FLIGHTS</span>
                 </label>
                 <input
+                  id="yearly-flights-input"
                   type="range"
                   min="0"
                   max="30"
@@ -287,36 +299,39 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
           {/* STEP 3: DIETARY LIFESTYLE */}
           {step === 3 && (
             <div className="space-y-6">
-              <label className="text-slate-305 font-mono text-xs mb-3 block">Dietary Profile</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(['vegan', 'vegetarian', 'flexitarian', 'meat-heavy'] as const).map((diet) => (
-                  <button
-                    key={diet}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, diet: diet })}
-                    className={`p-4 rounded-xl text-left border flex items-start gap-4 transition-all ${
-                      formData.diet === diet
-                        ? 'border-cyan-500 bg-cyan-500/10 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                        : 'border-white/5 bg-slate-900/40 text-slate-400 hover:border-white/10'
-                    }`}
-                  >
-                    <div className={`p-2.5 rounded-lg ${formData.diet === diet ? 'bg-cyan-500/20' : 'bg-slate-800'}`}>
-                      <Utensils className={`w-5 h-5 ${formData.diet === diet ? 'text-cyan-400' : 'text-slate-500'}`} />
-                    </div>
-                    <div>
-                      <div className="font-bold font-mono text-xs uppercase text-white">
-                        {diet === 'meat-heavy' ? 'MEAT_HEAVY' : diet}
+              <fieldset>
+                <legend className="text-slate-305 font-mono text-xs mb-3 block">Dietary Profile</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(['vegan', 'vegetarian', 'flexitarian', 'meat-heavy'] as const).map((diet) => (
+                    <button
+                      key={diet}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, diet: diet })}
+                      aria-label={`Select dietary lifestyle ${diet}`}
+                      className={`p-4 rounded-xl text-left border flex items-start gap-4 transition-all ${
+                        formData.diet === diet
+                          ? 'border-cyan-500 bg-cyan-500/10 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                          : 'border-white/5 bg-slate-900/40 text-slate-400 hover:border-white/10'
+                      }`}
+                    >
+                      <div className={`p-2.5 rounded-lg ${formData.diet === diet ? 'bg-cyan-500/20' : 'bg-slate-800'}`}>
+                        <Utensils className={`w-5 h-5 ${formData.diet === diet ? 'text-cyan-400' : 'text-slate-500'}`} />
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-1">
-                        {diet === 'vegan' && 'Plant-based exclusively. lowest carbon multiplier.'}
-                        {diet === 'vegetarian' && 'No meat, includes dairy. low carbon footprint.'}
-                        {diet === 'flexitarian' && 'Moderate meat/fish diets. average multiplier.'}
-                        {diet === 'meat-heavy' && 'Daily red meat, poultry, pork. high carbon multiplier.'}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                      <div>
+                        <div className="font-bold font-mono text-xs uppercase text-white">
+                          {diet === 'meat-heavy' ? 'MEAT_HEAVY' : diet}
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-1">
+                          {diet === 'vegan' && 'Plant-based exclusively. lowest carbon multiplier.'}
+                          {diet === 'vegetarian' && 'No meat, includes dairy. low carbon footprint.'}
+                          {diet === 'flexitarian' && 'Moderate meat/fish diets. average multiplier.'}
+                          {diet === 'meat-heavy' && 'Daily red meat, poultry, pork. high carbon multiplier.'}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
             </div>
           )}
 
@@ -344,14 +359,15 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               </div>
             </div>
           )}
-        </div>
+        </main>
 
         {/* Action Buttons */}
-        <div className="flex justify-between border-t border-white/5 pt-6 font-mono text-xs">
+        <footer className="flex justify-between border-t border-white/5 pt-6 font-mono text-xs">
           <button
             type="button"
             disabled={step === 1}
             onClick={prevStep}
+            aria-label="Return to previous onboarding setup step"
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/5 text-slate-300 font-bold transition-all hover:bg-slate-900 ${
               step === 1 ? 'opacity-0 pointer-events-none' : ''
             }`}
@@ -363,6 +379,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
             <button
               type="button"
               onClick={nextStep}
+              aria-label="Advance to next onboarding step"
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold transition-all hover:bg-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
             >
               NEXT_STEP <ArrowRight className="w-4 h-4" />
@@ -371,12 +388,13 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
             <button
               type="button"
               onClick={handleSubmit}
+              aria-label="Enter EcoSphere carbon dashboard application"
               className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-slate-950 font-extrabold transition-all hover:opacity-90 shadow-[0_0_20px_rgba(99,102,241,0.4)]"
             >
               INIT_ECOSPHERE <Leaf className="w-4 h-4 animate-spin-slow" />
             </button>
           )}
-        </div>
+        </footer>
       </div>
     </div>
   );
