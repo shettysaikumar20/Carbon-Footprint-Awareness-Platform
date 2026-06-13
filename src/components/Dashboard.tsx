@@ -6,7 +6,8 @@ import LogEmissionModal from './LogEmissionModal';
 import OffsetSimulator from './OffsetSimulator';
 import EcoJourneyRoadmap from './EcoJourneyRoadmap';
 import InsightsAdvisor from './InsightsAdvisor';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import AIChatConsole from './AIChatConsole';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area, Legend } from 'recharts';
 import {
   Compass,
   Zap,
@@ -26,7 +27,9 @@ import {
   Flame,
   CheckCircle,
   HelpCircle,
-  Car
+  Car,
+  Cpu,
+  BrainCircuit
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -36,7 +39,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ initialBaseline, initialOnboardingData, onResetOnboarding }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'roadmap' | 'insights'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'simulator' | 'roadmap' | 'insights' | 'aichat'>('dashboard');
   const [isLogOpen, setIsLogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -55,10 +58,10 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
   const [newRouteDistance, setNewRouteDistance] = useState(15);
   const [newRouteMode, setNewRouteMode] = useState<keyof typeof import('../lib/ecoStore').EMISSION_FACTORS.transport>('public');
 
+  // Load state on mount
   useEffect(() => {
     setMounted(true);
 
-    // Load from localStorage
     const savedLogs = localStorage.getItem('ecosphere_logs');
     if (savedLogs) setLogs(JSON.parse(savedLogs));
 
@@ -86,7 +89,6 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
     if (savedRoutesData) {
       setSavedRoutes(JSON.parse(savedRoutesData));
     } else {
-      // Default routes for convenience
       const defaultRoutes: SavedRoute[] = [
         { id: 'r1', label: 'Office Commute', distance: 12, mode: 'public' },
         { id: 'r2', label: 'Grocery Run', distance: 4, mode: 'electric' },
@@ -124,9 +126,8 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
   // Saved commute trigger log
   const handleQuickLogCommute = (route: SavedRoute) => {
-    const emissionFactor = 0.18; // fallback
-    const actualFactor = route.mode ? (require('../lib/ecoStore').EMISSION_FACTORS.transport[route.mode] || 0.18) : 0.18;
-    const emission = Math.round(route.distance * actualFactor);
+    const factor = route.mode === 'public' ? 0.04 : route.mode === 'electric' ? 0.05 : route.mode === 'hybrid' ? 0.10 : 0.18;
+    const emission = Math.round(route.distance * factor);
     
     handleAddLog({
       category: 'transport',
@@ -183,6 +184,22 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
   const handleDeleteLog = (id: string) => {
     const updated = logs.filter((log) => log.id !== id);
     saveLogs(updated);
+  };
+
+  // Trigger Demo tour to populate mock logs immediately
+  const handleTriggerDemoTour = () => {
+    const mockEntries: LogEntry[] = [
+      { id: 'm1', date: 'Jun 10, 2026', category: 'transport', details: '150 km roadtrip via petrol vehicle', emission: 27 },
+      { id: 'm2', date: 'Jun 11, 2026', category: 'energy', details: '80 kWh consumed from solar power', emission: 4 },
+      { id: 'm3', date: 'Jun 12, 2026', category: 'food', details: '3x meat-heavy dinners with friends', emission: 13.5 },
+      { id: 'm4', date: 'Jun 12, 2026', category: 'waste', details: '3 bags of standard landfill garbage', emission: 7.5 }
+    ];
+    // Commit 3 active reductions
+    const mockCommitments = commitments.map((c, i) => i < 3 ? { ...c, active: true } : c);
+    setCommitments(mockCommitments);
+    localStorage.setItem('ecosphere_commitments', JSON.stringify(mockCommitments));
+
+    saveLogs([...mockEntries, ...logs]);
   };
 
   // Unlock badges checking function
@@ -250,13 +267,13 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
 
   // Letter Grade Calculation based on Custom Target
   const calculateGrade = () => {
-    if (estimatedCurrentEmissions === 0) return { letter: 'A+', color: 'text-cyan-400', desc: 'Carbon Neutral' };
+    if (estimatedCurrentEmissions === 0) return { letter: 'A+', color: 'text-cyan-400', desc: 'Absolute Zero Neutrality' };
     const ratio = estimatedCurrentEmissions / carbonTarget;
-    if (ratio <= 0.6) return { letter: 'A', color: 'text-cyan-400 glow-text-cyan', desc: 'Outstanding reduction model' };
-    if (ratio <= 0.85) return { letter: 'B', color: 'text-indigo-400', desc: 'Solid environmental alignment' };
-    if (ratio <= 1.0) return { letter: 'C', color: 'text-yellow-400', desc: 'Within target limits' };
-    if (ratio <= 1.25) return { letter: 'D', color: 'text-orange-400', desc: 'Exceeding target envelope' };
-    return { letter: 'F', color: 'text-red-500', desc: 'System carbon overload' };
+    if (ratio <= 0.6) return { letter: 'A', color: 'text-cyan-400 glow-text-cyan', desc: 'Outstanding reduction metrics' };
+    if (ratio <= 0.85) return { letter: 'B', color: 'text-indigo-400', desc: 'Solid environmental compliance' };
+    if (ratio <= 1.0) return { letter: 'C', color: 'text-yellow-400', desc: 'Within target parameter boundaries' };
+    if (ratio <= 1.25) return { letter: 'D', color: 'text-orange-400', desc: 'Target threshold breached' };
+    return { letter: 'F', color: 'text-red-500', desc: 'Critical carbon load excess' };
   };
 
   const ecoGrade = calculateGrade();
@@ -275,6 +292,21 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
     { name: 'Food', emission: categoriesMap.food, color: '#a855f7' },
     { name: 'Waste', emission: categoriesMap.waste, color: '#f43f5e' },
   ];
+
+  // AI 5-Year Projections data model
+  const projectionData = [
+    { year: 'Year 0', currentPath: Math.round(initialBaseline * 12), targetPath: Math.round(initialBaseline * 12) },
+    { year: 'Year 1', currentPath: Math.round(initialBaseline * 12 * 2), targetPath: Math.round(estimatedCurrentEmissions * 12 * 2) },
+    { year: 'Year 2', currentPath: Math.round(initialBaseline * 12 * 3), targetPath: Math.round(estimatedCurrentEmissions * 12 * 3) },
+    { year: 'Year 3', currentPath: Math.round(initialBaseline * 12 * 4), targetPath: Math.round(estimatedCurrentEmissions * 12 * 4) },
+    { year: 'Year 4', currentPath: Math.round(initialBaseline * 12 * 5), targetPath: Math.round(estimatedCurrentEmissions * 12 * 5) },
+    { year: 'Year 5', currentPath: Math.round(initialBaseline * 12 * 6), targetPath: Math.round(estimatedCurrentEmissions * 12 * 6) },
+  ];
+
+  const countryLabel = initialOnboardingData.country === 'in' ? 'India' :
+                       initialOnboardingData.country === 'us' ? 'USA' :
+                       initialOnboardingData.country === 'de' ? 'Germany' :
+                       initialOnboardingData.country === 'fr' ? 'France' : 'Norway';
 
   if (!mounted) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono">LOADING_ECOSPHERE_CONSOLE...</div>;
 
@@ -298,9 +330,10 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
           <div className="bg-slate-950 border border-indigo-500/20 rounded-2xl p-4 mb-6 text-left relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-cyan-500/5 rounded-full blur-xl pointer-events-none" />
             <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">[SYSTEM_OPERATOR]</div>
-            <div className="text-cyan-400 font-bold font-mono text-xs mt-1.5 uppercase tracking-wide">
-              Warrior Lvl {Math.min(5, 1 + Math.floor(badges.filter((b) => b.unlocked).length / 2))}
+            <div className="text-white font-bold font-mono text-xs mt-1.5 uppercase tracking-wide">
+              {initialOnboardingData.username}
             </div>
+            <div className="text-[9px] text-slate-500 font-mono mt-0.5 font-semibold">GRID_LOC: {countryLabel.toUpperCase()}</div>
             {calculateStreak() > 0 && (
               <div className="flex items-center gap-1 mt-2 text-[10px] text-indigo-400 font-mono">
                 <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" /> STREAK: {calculateStreak()} DAYS
@@ -319,6 +352,17 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
               }`}
             >
               <Layers className="w-4 h-4 text-cyan-400" /> [DASHBOARD]
+            </button>
+
+            <button
+              onClick={() => setActiveTab('aichat')}
+              className={`w-full py-3 px-4 rounded-xl text-left font-bold flex items-center gap-3 transition-all ${
+                activeTab === 'aichat'
+                  ? 'bg-cyan-500/10 border border-cyan-500/20 text-white font-bold'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <BrainCircuit className="w-4 h-4 text-cyan-400 animate-pulse" /> [ECO_AI_CONSULT]
             </button>
 
             <button
@@ -374,18 +418,27 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
           <div>
             <h1 className="text-xl font-bold font-mono text-white tracking-wider uppercase">
               {activeTab === 'dashboard' && 'SYSTEM_DASHBOARD_READOUT'}
+              {activeTab === 'aichat' && 'ECO_AI_CONSULTANT_CORE'}
               {activeTab === 'simulator' && 'QUANTUM_OFFSET_SIM'}
               {activeTab === 'roadmap' && 'TRANSITION_TIMELINE_COORDS'}
               {activeTab === 'insights' && 'CARBON_REDUCTION_ADVISOR'}
             </h1>
             <p className="text-[10px] text-slate-500 font-mono mt-1">// OPERATING ON ANTIGRAVITY SPECIFICATIONS</p>
           </div>
-          <button
-            onClick={() => setIsLogOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold font-mono text-xs transition-all hover:bg-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-          >
-            <Plus className="w-4 h-4" /> [LOG_NEW_EMISSION]
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleTriggerDemoTour}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-indigo-500/15 bg-slate-950 text-indigo-400 font-bold font-mono text-xs hover:border-indigo-500/40 hover:bg-slate-900 transition-all"
+            >
+              <Cpu className="w-4 h-4" /> [SYSTEM_DEMO_TOUR]
+            </button>
+            <button
+              onClick={() => setIsLogOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-bold font-mono text-xs transition-all hover:bg-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+            >
+              <Plus className="w-4 h-4" /> [LOG_NEW_EMISSION]
+            </button>
+          </div>
         </div>
 
         {/* Dynamic Tab Render */}
@@ -457,7 +510,7 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
               <div className="glass-panel rounded-2xl p-5 border border-indigo-500/15 text-left relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="text-[9px] text-slate-500 uppercase tracking-widest">[COMMITMENT_REDUCTIONS]</div>
-                <div className="text-xl font-bold text-cyan-400 mt-2 glow-text-cyan">-{Math.round(activeReductionAnnual / 12)} KG <span className="text-[10px] text-slate-500">CO₂E/MO</span></div>
+                <div className="text-xl font-bold text-cyan-400 mt-2 glow-text-cyan font-mono">-{Math.round(activeReductionAnnual / 12)} KG <span className="text-[10px] text-slate-500">CO₂E/MO</span></div>
                 <p className="text-[9px] text-slate-500 mt-2">// From {commitments.filter(c => c.active).length} active reduction targets.</p>
               </div>
 
@@ -466,6 +519,28 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
                 <div className="text-[9px] text-slate-500 uppercase tracking-widest">[EST_NET_MONTHLY]</div>
                 <div className="text-xl font-bold text-indigo-400 mt-2 glow-text-indigo">{estimatedCurrentEmissions} KG <span className="text-[10px] text-slate-500">CO₂E</span></div>
                 <p className="text-[9px] text-slate-500 mt-2">// Baseline reductions + ledger logs.</p>
+              </div>
+            </div>
+
+            {/* AI 5-Year Forecast Area Chart */}
+            <div className="glass-panel rounded-3xl p-6 border border-indigo-500/20">
+              <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <BrainCircuit className="w-4 h-4 text-cyan-400" /> [AI_CARBON_PROJECTOR_5_YEAR_FORECAST]
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={projectionData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="year" stroke="#475569" fontSize={10} tickLine={false} className="font-mono" />
+                    <YAxis stroke="#475569" fontSize={10} tickLine={false} className="font-mono" />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#030712', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '12px' }}
+                      labelStyle={{ color: '#fff', fontWeight: 'bold', fontFamily: 'monospace' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 10, fontFamily: 'monospace' }} />
+                    <Area type="monotone" dataKey="currentPath" name="BAU Path (No Actions)" stroke="#f43f5e" fillOpacity={0.1} fill="#f43f5e" />
+                    <Area type="monotone" dataKey="targetPath" name="Projected Path (With Commitments)" stroke="#06b6d4" fillOpacity={0.15} fill="#06b6d4" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -712,6 +787,13 @@ export default function Dashboard({ initialBaseline, initialOnboardingData, onRe
               )}
             </div>
           </div>
+        )}
+
+        {activeTab === 'aichat' && (
+          <AIChatConsole
+            onboardingData={initialOnboardingData}
+            logs={logs}
+          />
         )}
 
         {activeTab === 'simulator' && (

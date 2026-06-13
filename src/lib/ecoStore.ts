@@ -1,4 +1,7 @@
 export interface OnboardingData {
+  username: string;
+  country: 'in' | 'us' | 'de' | 'fr' | 'no';
+  avatarColor: string; // e.g. '#06b6d4' (cyan) or '#6366f1' (indigo)
   houseSize: number; // sqft
   energySource: 'grid' | 'hybrid' | 'solar';
   vehicleType: 'petrol' | 'diesel' | 'hybrid' | 'electric' | 'none';
@@ -41,7 +44,15 @@ export interface SavedRoute {
   mode: keyof typeof EMISSION_FACTORS.transport;
 }
 
-// Standard Carbon Coefficients (kg CO2e)
+// Regional Grid Coefficients (kg CO2e per kWh)
+export const COUNTRY_GRID_FACTORS = {
+  in: 0.70, // India: Coal-reliant grid
+  us: 0.38, // USA: Mixed natural gas/coal grid
+  de: 0.35, // Germany: Wind/Coal transitional grid
+  fr: 0.05, // France: Nuclear clean grid
+  no: 0.01, // Norway: Scandanavian hydropower clean grid
+};
+
 export const EMISSION_FACTORS = {
   // Transport (per km)
   transport: {
@@ -50,14 +61,14 @@ export const EMISSION_FACTORS = {
     hybrid: 0.10,
     electric: 0.05,
     public: 0.04,
-    flight_short: 0.15, // per passenger km
-    flight_long: 0.11, // per passenger km
+    flight_short: 0.15,
+    flight_long: 0.11,
   },
-  // Energy
+  // Base Energy Factor multipliers
   energy: {
-    grid: 0.38, // kg CO2e per kWh
-    hybrid: 0.19,
-    solar: 0.02,
+    grid: 1.0, // multiplier for Country Grid factor
+    hybrid: 0.5,
+    solar: 0.05,
   },
   // Food (per meal)
   food: {
@@ -66,9 +77,9 @@ export const EMISSION_FACTORS = {
     flexitarian: 2.1,
     'meat-heavy': 4.5,
   },
-  // Waste (per standard trash bag / week equivalent)
+  // Waste (per standard trash bag)
   waste: {
-    standard: 2.5, // kg CO2e
+    standard: 2.5,
     recycled: 0.5,
   }
 };
@@ -175,8 +186,10 @@ export const INITIAL_BADGES: Badge[] = [
 
 // Calculates baseline monthly emissions in kg CO2e
 export function calculateBaseline(data: OnboardingData): number {
+  // Resolve regional grid coefficient
+  const gridIntensity = COUNTRY_GRID_FACTORS[data.country || 'us'];
   const monthlyKwh = data.houseSize * 0.8;
-  const energyFactor = EMISSION_FACTORS.energy[data.energySource];
+  const energyFactor = EMISSION_FACTORS.energy[data.energySource] * gridIntensity;
   const energyCarbon = monthlyKwh * energyFactor;
 
   const vehicleFactor = data.vehicleType === 'none' ? 0 : EMISSION_FACTORS.transport[data.vehicleType];
@@ -204,4 +217,80 @@ export function exportToCSV(logs: LogEntry[]): string {
   ]);
 
   return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+}
+
+// Localized Climate AI Agent Heuristics compiler
+export function compileAIResponse(query: string, data: OnboardingData, logs: LogEntry[]): string {
+  const q = query.toLowerCase();
+  
+  // Calculate stats
+  const totalLogsEmission = logs.reduce((acc, l) => acc + l.emission, 0);
+  const transportLogs = logs.filter(l => l.category === 'transport');
+  const energyLogs = logs.filter(l => l.category === 'energy');
+  const foodLogs = logs.filter(l => l.category === 'food');
+  
+  const countryName = data.country === 'in' ? 'India' :
+                      data.country === 'us' ? 'United States' :
+                      data.country === 'de' ? 'Germany' :
+                      data.country === 'fr' ? 'France' : 'Norway';
+
+  let header = `[ECOSPHERE_AI_AGENT // CONSULTATION_REPORT]\n`;
+  header += `OPERATOR: ${data.username.toUpperCase()} // LOC: ${data.country.toUpperCase()} (${countryName})\n`;
+  header += `DIAGNOSTIC STATUS: ACTIVE\n`;
+  header += `--------------------------------------------------------\n\n`;
+
+  if (q.includes('transport') || q.includes('commute') || q.includes('car') || q.includes('flight')) {
+    const transitBaseline = Math.round(data.weeklyDistance * 4 * (data.vehicleType === 'none' ? 0 : EMISSION_FACTORS.transport[data.vehicleType]));
+    return header + 
+      `[AI_TRANSIT_DIAGNOSTIC]:\n` +
+      `* Your transport profile baseline registers at ~${transitBaseline} kg CO2e/month.\n` +
+      `* Your vehicle configuration is set to: [${data.vehicleType.toUpperCase()}].\n` +
+      `* Yearly flight metrics: [${data.flights} round trips].\n\n` +
+      `[AI_REDUCTION_PLAN]:\n` +
+      `1. Since you commute ${data.weeklyDistance} km/week, swapping just 2 commutes to public transit (${EMISSION_FACTORS.transport.public} kg/km) or active riding will trim your footprint indices by ~${Math.round(data.weeklyDistance * 0.15)} kg/month.\n` +
+      `2. Aviation offsets: Each short-haul flight adds ~300 kg CO2e. Consolidate travel plans or invest in wind power offsets during flights.`;
+  }
+
+  if (q.includes('energy') || q.includes('electricity') || q.includes('power') || q.includes('grid')) {
+    const gridVal = COUNTRY_GRID_FACTORS[data.country];
+    return header + 
+      `[AI_POWER_DIAGNOSTIC]:\n` +
+      `* Your grid coefficient for ${countryName} is [${gridVal} kg/kWh].\n` +
+      `* Household size parameters: [${data.houseSize} SQFT].\n` +
+      `* Energy configuration model: [${data.energySource.toUpperCase()}].\n\n` +
+      `[AI_GRID_OPTIMIZATIONS]:\n` +
+      `1. ${data.country === 'in' ? 'India\'s coal grid intensity makes power conservation high-priority.' : 'Optimize your electricity feeds.'}\n` +
+      `2. Washing clothes on cold cycles reduces thermal element utility by 90%. Saving: ~5 kg CO2e/month.\n` +
+      `3. Swapping standard bulbs to LEDs offers an immediate 80% grid drop.`;
+  }
+
+  if (q.includes('food') || q.includes('diet') || q.includes('meat') || q.includes('vegan')) {
+    return header + 
+      `[AI_DIETARY_DIAGNOSTIC]:\n` +
+      `* Selected diet intensity: [${data.diet.toUpperCase()}].\n` +
+      `* Standard diet coefficient: ~${EMISSION_FACTORS.food[data.diet]} kg CO2e per meal.\n\n` +
+      `[AI_DIETARY_MITIGATION]:\n` +
+      `1. Swapping from ${data.diet} to vegetarian or vegan meals just twice a week diverts ~30-50 kg CO2e/month.\n` +
+      `2. Meat-heavy diets are land-intensive. Prioritize plant protein streams to decrease industrial methane output.`;
+  }
+
+  if (q.includes('predict') || q.includes('forecast') || q.includes('future') || q.includes('projection')) {
+    const yearlyBaseline = calculateBaseline(data) * 12;
+    return header + 
+      `[AI_FORECAST_SIMULATION]:\n` +
+      `* 5-Year Cumulative Output (Business As Usual): ~${(yearlyBaseline * 5).toLocaleString()} kg CO2e.\n` +
+      `* 5-Year Cumulative Output (Target Ceiling Path): ~${((calculateBaseline(data) * 0.7) * 12 * 5).toLocaleString()} kg CO2e.\n\n` +
+      `[AI_DECISION_MATRIX]:\n` +
+      `* Implementing active mitigation commitments today diverts up to ${(yearlyBaseline * 0.3 * 5).toLocaleString()} kg CO2e over the forecast period, avoiding localized climate degradation.`;
+  }
+
+  // Default diagnostic report
+  const baseline = calculateBaseline(data);
+  return header + 
+    `[SYSTEM_DIAGNOSTIC_SUMMARY]:\n` +
+    `* Calculated Baseline: ${baseline} kg CO2e/mo.\n` +
+    `* Active logs logged: ${logs.length} logged entries.\n` +
+    `* Total ledger emissions: ${totalLogsEmission} kg CO2e.\n\n` +
+    `[RECOMMENDED_QUERY]:\n` +
+    `Query parameters detected: NULL. Try typing "transport", "energy", "diet", or "predict" in the terminal input to get specialized AI carbon reports.`;
 }

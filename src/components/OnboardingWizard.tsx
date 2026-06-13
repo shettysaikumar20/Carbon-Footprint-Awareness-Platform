@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { OnboardingData, calculateBaseline } from '../lib/ecoStore';
-import { Home, Car, Utensils, ArrowRight, ArrowLeft, CheckCircle2, Leaf, Zap, HelpCircle } from 'lucide-react';
+import { Leaf, Zap, Car, Utensils, ArrowRight, ArrowLeft, CheckCircle2, HelpCircle } from 'lucide-react';
 
 interface OnboardingWizardProps {
   onComplete: (data: OnboardingData, baseline: number) => void;
 }
 
 export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
+  const [welcomeScreen, setWelcomeScreen] = useState(true);
+  const [bootStep, setBootStep] = useState(0);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<OnboardingData>({
+    username: 'Operator',
+    country: 'in',
+    avatarColor: '#06b6d4',
     houseSize: 1500,
     energySource: 'grid',
     vehicleType: 'petrol',
@@ -18,6 +23,24 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     diet: 'flexitarian',
     flights: 2,
   });
+
+  const bootLogs = [
+    '// INITIALIZING QUANTUM ENVIRONMENTAL LEDGER...',
+    '// BOOTSTRAPPING CO2e CONVERSION COEFFICIENTS...',
+    '// PARSING EPA & DEFRA EMISSIONS PROTOCOLS...',
+    '// CALIBRATING ANTIGRAVITY SYS CONTROLS...',
+    '// ECOSPHERE CORE STABILITY LCK: ONLINE.'
+  ];
+
+  // Typewriter boot loader effect
+  useEffect(() => {
+    if (welcomeScreen && bootStep < bootLogs.length) {
+      const timer = setTimeout(() => {
+        setBootStep((prev) => prev + 1);
+      }, 550);
+      return () => clearTimeout(timer);
+    }
+  }, [welcomeScreen, bootStep]);
 
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 4));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
@@ -28,8 +51,49 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
     onComplete(formData, calculatedVal);
   };
 
+  if (welcomeScreen) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+        <div className="w-full max-w-xl glass-panel rounded-3xl p-8 border border-indigo-500/20 relative font-mono text-xs text-slate-400">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Console Header */}
+          <div className="flex justify-between items-center border-b border-indigo-500/15 pb-4 mb-6">
+            <span className="font-bold text-white tracking-widest">[ECOSPHERE_BOOT_SEQUENCE]</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-ping" />
+          </div>
+
+          {/* Boot logs print */}
+          <div className="space-y-3 min-h-[160px] font-mono">
+            {bootLogs.slice(0, bootStep).map((log, idx) => (
+              <div key={idx} className={idx === bootLogs.length - 1 ? 'text-cyan-400 font-bold glow-text-cyan' : 'text-slate-300'}>
+                {log}
+              </div>
+            ))}
+            {bootStep < bootLogs.length && (
+              <div className="text-slate-500 animate-pulse">// LOADING INPUT MATRICES... <span className="inline-block w-1.5 h-3 bg-slate-400" /></div>
+            )}
+          </div>
+
+          {/* Proceed Button */}
+          {bootStep >= bootLogs.length && (
+            <div className="border-t border-white/5 pt-6 mt-6 transition-all animate-fade-in text-center">
+              <button
+                onClick={() => setWelcomeScreen(false)}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-slate-950 font-bold transition-all hover:opacity-90 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+              >
+                PROCEED_TO_OPERATOR_CALIBRATION
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-radial-gradient">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-2xl glass-panel rounded-3xl p-8 md:p-12 border border-indigo-500/20 relative overflow-hidden">
         {/* Glow Effects */}
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
@@ -67,13 +131,13 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" /> ANTIGRAVITY // ECO_BASELINE
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight sm:text-4xl">
-            {step === 1 && 'Household & Energy'}
+            {step === 1 && 'Operator Credentials'}
             {step === 2 && 'Travel & Transport'}
             {step === 3 && 'Dietary Lifestyle'}
             {step === 4 && 'Your Footprint Analysis'}
           </h1>
           <p className="text-slate-400 mt-2 text-sm">
-            {step === 1 && 'Estimate household energy variables to build your emission baseline.'}
+            {step === 1 && 'Define your operator credentials and dynamic grid location.'}
             {step === 2 && 'Define commute modes, distance profiles, and aviation frequencies.'}
             {step === 3 && 'Calculate the ecological coefficients of your food lifestyle.'}
             {step === 4 && 'Confirm your profile baseline parameters and launch EcoSphere.'}
@@ -82,13 +146,65 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
         {/* Content Steps */}
         <div className="my-8 min-h-[260px]">
-          {/* STEP 1: HOUSEHOLD & ENERGY */}
+          {/* STEP 1: OPERATOR PROFILE SETUP */}
           {step === 1 && (
-            <div className="space-y-6">
+            <div className="space-y-6 font-mono text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-400 uppercase tracking-wider mb-2">Operator Name</label>
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-200 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 uppercase tracking-wider mb-2">Location Country</label>
+                  <select
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value as any })}
+                    className="w-full px-4 py-2.5 bg-slate-900 border border-white/5 rounded-xl text-slate-400 focus:outline-none focus:border-cyan-500"
+                  >
+                    <option value="in">India (Coal heavy, 0.70 kg/kWh)</option>
+                    <option value="us">United States (Mixed grid, 0.38 kg/kWh)</option>
+                    <option value="de">Germany (Wind/Coal, 0.35 kg/kWh)</option>
+                    <option value="fr">France (Nuclear clean, 0.05 kg/kWh)</option>
+                    <option value="no">Norway (Hydropower, 0.01 kg/kWh)</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="flex justify-between text-slate-300 font-mono text-xs mb-2">
-                  <span>HOME_SIZE_SQFT</span>
-                  <span className="text-cyan-400 font-bold font-mono">{formData.houseSize} SQFT</span>
+                <label className="block text-slate-400 uppercase tracking-wider mb-2">Avatar Console Tint</label>
+                <div className="flex gap-4">
+                  {[
+                    { hex: '#06b6d4', name: 'Cyan' },
+                    { hex: '#6366f1', name: 'Indigo' },
+                    { hex: '#a855f7', name: 'Purple' },
+                    { hex: '#f43f5e', name: 'Rose' },
+                  ].map((color) => (
+                    <button
+                      key={color.hex}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, avatarColor: color.hex })}
+                      className={`px-4 py-2 rounded-lg border transition-all ${
+                        formData.avatarColor === color.hex
+                          ? 'border-cyan-500 text-white'
+                          : 'border-white/5 bg-slate-900/40 text-slate-550'
+                      }`}
+                      style={{ color: formData.avatarColor === color.hex ? color.hex : '' }}
+                    >
+                      {color.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="flex justify-between text-slate-350 mb-2">
+                  <span>Home Size (sq. ft.)</span>
+                  <span className="text-cyan-400 font-bold">{formData.houseSize} SQFT</span>
                 </label>
                 <input
                   type="range"
@@ -99,37 +215,6 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   onChange={(e) => setFormData({ ...formData, houseSize: Number(e.target.value) })}
                   className="w-full h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-cyan-500"
                 />
-                <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-1">
-                  <span>500 SQFT</span>
-                  <span>2,500 SQFT</span>
-                  <span>5,000 SQFT</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-mono text-xs mb-3 block">ENERGY_GRID_SOURCE</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {(['grid', 'hybrid', 'solar'] as const).map((energy) => (
-                    <button
-                      key={energy}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, energySource: energy })}
-                      className={`p-4 rounded-xl text-left border transition-all ${
-                        formData.energySource === energy
-                          ? 'border-cyan-500 bg-cyan-500/10 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                          : 'border-white/5 bg-slate-900/40 text-slate-400 hover:border-white/10'
-                      }`}
-                    >
-                      <Zap className={`w-5 h-5 mb-2 ${formData.energySource === energy ? 'text-cyan-400' : 'text-slate-500'}`} />
-                      <div className="font-bold font-mono text-xs uppercase text-white">{energy}</div>
-                      <div className="text-[10px] text-slate-500 mt-1">
-                        {energy === 'grid' && '100% Fossil Fuel'}
-                        {energy === 'hybrid' && 'Grid + Solar Share'}
-                        {energy === 'solar' && '100% Rooftop Solar'}
-                      </div>
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           )}
@@ -138,7 +223,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="text-slate-300 font-mono text-xs mb-3 block">VEHICLE_FUEL_COEFFICIENT</label>
+                <label className="text-slate-350 font-mono text-xs mb-3 block">Primary Commute Vehicle Type</label>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   {(['petrol', 'diesel', 'hybrid', 'electric', 'none'] as const).map((type) => (
                     <button
@@ -148,11 +233,11 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                       className={`p-3 rounded-xl text-center border transition-all ${
                         formData.vehicleType === type
                           ? 'border-cyan-500 bg-cyan-500/10 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                          : 'border-white/5 bg-slate-900/40 text-slate-400 hover:border-white/10'
+                          : 'border-white/5 bg-slate-900/40 text-slate-405 hover:border-white/10'
                       }`}
                     >
                       <Car className={`w-5 h-5 mx-auto mb-1 ${formData.vehicleType === type ? 'text-cyan-400' : 'text-slate-500'}`} />
-                      <div className="font-bold font-mono text-[10px] uppercase text-white">{type === 'none' ? 'active' : type}</div>
+                      <div className="font-bold font-mono text-[10px] uppercase text-white">{type === 'none' ? 'Bicycle/Walk' : type}</div>
                     </button>
                   ))}
                 </div>
@@ -161,7 +246,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               {formData.vehicleType !== 'none' && (
                 <div>
                   <label className="flex justify-between text-slate-300 font-mono text-xs mb-2">
-                    <span>WEEKLY_COMMUTE_DISTANCE</span>
+                    <span>Weekly Commute Distance (km)</span>
                     <span className="text-cyan-400 font-bold font-mono">{formData.weeklyDistance} KM</span>
                   </label>
                   <input
@@ -183,7 +268,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
 
               <div>
                 <label className="flex justify-between text-slate-300 font-mono text-xs mb-2">
-                  <span>ANNUAL_AVIATION_TRIPS</span>
+                  <span>Flights Per Year (Round Trips)</span>
                   <span className="text-indigo-400 font-bold font-mono">{formData.flights} FLIGHTS</span>
                 </label>
                 <input
@@ -195,11 +280,6 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   onChange={(e) => setFormData({ ...formData, flights: Number(e.target.value) })}
                   className="w-full h-2 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                 />
-                <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-1">
-                  <span>0 FLIGHTS</span>
-                  <span>15 FLIGHTS</span>
-                  <span>30 FLIGHTS</span>
-                </div>
               </div>
             </div>
           )}
@@ -207,7 +287,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
           {/* STEP 3: DIETARY LIFESTYLE */}
           {step === 3 && (
             <div className="space-y-6">
-              <label className="text-slate-300 font-mono text-xs mb-3 block">DIET_CARBON_INTENSITY</label>
+              <label className="text-slate-305 font-mono text-xs mb-3 block">Dietary Profile</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {(['vegan', 'vegetarian', 'flexitarian', 'meat-heavy'] as const).map((diet) => (
                   <button
@@ -252,7 +332,7 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                   <span className="text-5xl font-black text-white glow-text-cyan">
                     {calculatedVal.toLocaleString()}
                   </span>
-                  <span className="text-slate-400 text-sm font-bold uppercase">kg CO₂e / mo</span>
+                  <span className="text-slate-450 text-sm font-bold uppercase">kg CO₂e / mo</span>
                 </div>
               </div>
 
