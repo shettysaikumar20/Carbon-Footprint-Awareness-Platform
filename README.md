@@ -98,26 +98,24 @@ All logged carbon outputs can be exported client-side as a standard formatted CS
 ---
 
 ## 📂 Codebase Architecture
-```
-g:/sai/
-├── src/
-│   ├── app/
-│   │   ├── globals.css      # Custom Antigravity grid style rules and animation pulses
-│   │   ├── layout.tsx       # Root layout injecting fonts and metadata
-│   │   └── page.tsx         # Gateway route allocating Onboarding or Dashboard
-│   ├── components/
-│   │   ├── Dashboard.tsx          # Central control cabin, charts, and routes manager
-│   │   ├── OnboardingWizard.tsx   # Baseline calculator questionnaire with boot typing
-│   │   ├── AIChatConsole.tsx      # Terminal AI consultant simulator dialog panel
-│   │   ├── LogEmissionModal.tsx   # Multi-tab transactional logger
-│   │   ├── OffsetSimulator.tsx    # Offset sliders for tree, wind, and solar projects
-│   │   ├── EcoJourneyRoadmap.tsx  # Gamified milestones timeline
-│   │   └── InsightsAdvisor.tsx    # Dynamic saving checklists
-│   └── lib/
-│       └── ecoStore.ts            # Mathematical rules, local AI engine, and CSV exporter
-├── package.json
-└── tsconfig.json
-```
+* 🌐 **Routing & Styling:**
+  * [`src/app/globals.css`](./src/app/globals.css): Custom Antigravity grid style rules and animation pulses
+  * [`src/app/layout.tsx`](./src/app/layout.tsx): Root layout injecting fonts and metadata
+  * [`src/app/page.tsx`](./src/app/page.tsx): Gateway route allocating Onboarding or Dashboard
+* 🧩 **Components:**
+  * [`src/components/Dashboard.tsx`](./src/components/Dashboard.tsx): Central control cabin, charts, and routes manager
+  * [`src/components/OnboardingWizard.tsx`](./src/components/OnboardingWizard.tsx): Baseline calculator questionnaire with boot typing
+  * [`src/components/AIChatConsole.tsx`](./src/components/AIChatConsole.tsx): Terminal AI consultant simulator dialog panel
+  * [`src/components/LogEmissionModal.tsx`](./src/components/LogEmissionModal.tsx): Multi-tab carbon ledger logger
+  * [`src/components/OffsetSimulator.tsx`](./src/components/OffsetSimulator.tsx): Offset simulator for trees, wind, and solar
+  * [`src/components/EcoJourneyRoadmap.tsx`](./src/components/EcoJourneyRoadmap.tsx): Gamified roadmap milestones timeline
+  * [`src/components/InsightsAdvisor.tsx`](./src/components/InsightsAdvisor.tsx): Dynamic carbon & economic savings checklist
+* 🧪 **Testing:**
+  * [`src/lib/ecoStore.test.ts`](./src/lib/ecoStore.test.ts): Unit tests for calculations and AI consultation report keywords
+  * [`src/components/InsightsAdvisor.test.tsx`](./src/components/InsightsAdvisor.test.tsx): Integration tests for commitment checklists
+  * [`src/components/OffsetSimulator.test.tsx`](./src/components/OffsetSimulator.test.tsx): Integration tests for offset simulations
+* 🧮 **Utilities & Logic:**
+  * [`src/lib/ecoStore.ts`](./src/lib/ecoStore.ts): Mathematical formulas, local AI logic, and CSV exporter
 
 ---
 
